@@ -1,0 +1,239 @@
+<html>
+    <head>
+        <title>Minion internals</title>
+
+<style>
+body {
+    background-color: #eeeeee;
+    font-family: Sans-serif;
+}
+div.eyeback {
+    position: absolute;
+    top: 50px;
+    left: 50px;
+    background-color: yellow;
+    border: 1px solid black;
+    width: 700px;
+    height: 500px;
+}
+div.controls {
+    position: absolute;
+    top: 50px;
+    left: 800px;
+    width: 100px;
+    height: 500px;
+    background-color: silver;
+    border: 1px solid black;
+}
+</style>
+    </head>
+    <body>
+        <div class="eyeback">
+            <canvas id="eye" width="640" height="480">
+            </canvas>
+        </div>
+
+        <div class="controls">
+            <button onClick="">Blink</button>
+            <button onClick="smallPupil()">Small pupil</button>
+            <button onClick="bigPupil()">Big pupil</button>
+            <button>Sleepy</button>
+            <button>Alert</button>
+        </div>
+
+<script>
+
+var eye = {
+    destinationPupilSize: 30,
+    currentPupilSize: 90,
+    eyeballRadius: 200,
+    irisRadius: 125,
+    smallPupilSize: 30,
+    largePupilSize: 60
+};
+
+function drawTopEyelid(ctx, centerX, centerY) {
+    // Draw eyelids. The top lid is a bezier curve. The connecting points are
+    // slightly outside the eyeball itself, positioned on the center line.
+    // The control points are aligned with the connecting points on each side
+    // and the position of the control points determines the position of the
+    // eye lid. The lid goes 90% down when closed and the bottom eyelid
+    // does the rest.
+
+    // Yellow with a hint of red
+    ctx.fillStyle = 'FFD803';
+    ctx.beginPath();
+    ctx.moveTo(centerX - eye.eyeballRadius - 25, centerY - eye.eyeballRadius);
+    ctx.lineTo(centerX - eye.eyeballRadius - 25, centerY);
+
+    var p1 =  {
+        x: centerX - eye.eyeballRadius - 25,
+        y: centerY
+    };
+    var p2 = {
+        x: centerX + eye.eyeballRadius + 25,
+        y: centerY
+    };
+
+    // Move the y coordinate of the control points to
+    // open and close the eyelid
+    var ypos = centerY - 1.2*eye.eyeballRadius;
+    var cp1 = {
+        x: p1.x,
+        y: ypos
+    };
+    var cp2 = {
+        x: p2.x,
+        y: ypos
+    };
+    ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, p2.x, p2.y);
+
+    ctx.lineTo(centerX + eye.eyeballRadius + 25, centerY);
+    ctx.lineTo(centerX + eye.eyeballRadius + 25, centerY - eye.eyeballRadius);
+    ctx.fill();
+
+    ctx.closePath();
+}
+
+function drawBottomEyelid(ctx, centerX, centerY) {
+    ctx.fillStyle = 'FFD803';
+    ctx.beginPath();
+    ctx.moveTo(centerX - eye.eyeballRadius - 25, centerY + eye.eyeballRadius);
+    ctx.lineTo(centerX + eye.eyeballRadius + 25, centerY + eye.eyeballRadius);
+    ctx.lineTo(centerX + eye.eyeballRadius + 25, centerY);
+
+    var p1 = {
+        x: centerX + eye.eyeballRadius + 25,
+        y: centerY
+    }
+
+    var p2 = {
+        x: centerX - eye.eyeballRadius - 25,
+        y: centerY
+    }
+    var ypos = centerY + 1.2*eye.eyeballRadius;
+    var cp1 = {
+        x: p1.x,
+        y: ypos
+    };
+    var cp2 = {
+        x: p2.x,
+        y: ypos
+    };
+    ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, p2.x, p2.y);
+
+    ctx.lineTo(centerX - eye.eyeballRadius - 25, centerY);
+    ctx.fill();
+
+    ctx.closePath();
+}
+
+function drawHighlight(ctx, centerX, centerY) {
+    ctx.beginPath();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.arc(centerX - 25, centerY - 25, 20, 0, Math.PI*2);
+    ctx.fill();
+    ctx.closePath();
+}
+
+function drawPupil(ctx, centerX, centerY) {
+    ctx.beginPath();
+    ctx.fillStyle = 'black';
+    ctx.arc(centerX, centerY, eye.currentPupilSize, 0, Math.PI*2);
+    ctx.fill();
+    ctx.closePath();
+}
+
+function drawIris(ctx, centerX, centerY) {
+    // Iris
+    // Fill the entire iris with
+    // Four shades of brown:
+    // Dark brown background: CB5800
+    // Lighter inner circle: E87000
+    // solid triangles: B45700
+    // translucent triangles: 9E4D00
+
+    var irisGradient
+        = ctx.createRadialGradient(centerX, centerY, 100, centerX, centerY, 128);
+    irisGradient.addColorStop(0, 'E87000');
+    irisGradient.addColorStop(1, '7E3700');
+
+    ctx.beginPath();
+    ctx.fillStyle = irisGradient;
+    ctx.arc(centerX, centerY, eye.irisRadius, 0, Math.PI*2);
+    ctx.fill();
+    ctx.closePath();
+
+    // TODO: Iris pattern
+}
+
+function drawEyeball(ctx, centerX, centerY) {
+    // Eyeball with light coming from top left
+    var eyeballGradient = ctx.createRadialGradient(centerX-10, centerY-10, 175, centerX, centerY, eye.eyeballRadius);
+    eyeballGradient.addColorStop(1, 'dddddd');
+    eyeballGradient.addColorStop(0, 'white');
+    ctx.beginPath();
+    ctx.fillStyle = eyeballGradient;
+    ctx.arc(centerX, centerY, eye.eyeballRadius, 0, Math.PI*2);
+    ctx.closePath();
+    ctx.fill();
+}
+function drawEye() {
+    var canvas = document.getElementById('eye');
+    var ctx = canvas.getContext('2d');
+    var centerX = canvas.width/2;
+    var centerY = canvas.height/2;
+
+    drawEyeball(ctx, centerX, centerY);
+
+    drawIris(ctx, centerX, centerY);
+
+    drawPupil(ctx, centerX, centerY);
+
+    drawHighlight(ctx, centerX, centerY);
+
+    drawTopEyelid(ctx, centerX, centerY);
+    drawBottomEyelid(ctx, centerX, centerY);
+
+    // Animate pupil if required
+    if (eye.destinationPupilSize != eye.currentPupilSize) {
+        var diff = (eye.destinationPupilSize - eye.currentPupilSize)/20;
+        eye.currentPupilSize += diff;
+        if (Math.abs(diff) < 0.01) {
+            eye.currentPupilSize = eye.destinationPupilSize;
+        }
+        window.requestAnimationFrame(function() {
+            drawEye();
+        });
+    }
+
+
+}
+
+function refresh() {
+    window.requestAnimationFrame(function() {
+        drawEye();
+    });
+}
+
+function smallPupil() {
+    eye.destinationPupilSize = eye.smallPupilSize;
+    refresh();
+}
+
+function bigPupil() {
+    eye.destinationPupilSize = eye.largePupilSize;
+    refresh();
+}
+
+document.addEventListener('DOMContentLoaded', function(event) {
+    window.requestAnimationFrame(function() {
+        drawEye();
+    });
+});
+
+</script>
+    </body>
+
+
+</html>
