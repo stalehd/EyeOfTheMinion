@@ -33,10 +33,12 @@ div.controls {
         </div>
 
         <div class="controls">
-            Actions
+            Pupil
+            <button onClick="tinyPupil()">On drugs</button>
             <button onClick="smallPupil()">Small pupil</button>
             <button onClick="normPupil()">Normal pupil</button>
             <button onClick="bigPupil()">Big pupil</button>
+            <button onClick="massivePupil()">Another drug</button>
             <hr/>
             States
             <button onClick="normal()">Normal</button>
@@ -56,6 +58,7 @@ div.controls {
             <button onClick="fastBlink()">Fast blink</button>
             <button onClick="slowBlink()">Relaxed blink</button>
             <button onClick="normalBlink()">Normal blink</button>
+
         </div>
 
 <script>
@@ -235,6 +238,12 @@ function drawEye() {
     drawBottomEyelid(ctx, centerX, centerY);
 }
 
+function tinyPupil() {
+    var tween = new TWEEN.Tween(eye);
+    tween.to({ currentPupilSize: 5 }, 250);
+    tween.start();
+}
+
 function smallPupil() {
     var tween = new TWEEN.Tween(eye);
     tween.to({ currentPupilSize: SMALL_PUPIL }, 250);
@@ -247,6 +256,11 @@ function bigPupil() {
     tween.start();
 }
 
+function massivePupil() {
+    var tween = new TWEEN.Tween(eye);
+    tween.to({ currentPupilSize: 1.4*LARGE_PUPIL }, 250);
+    tween.start();
+}
 function normPupil() {
     var tween = new TWEEN.Tween(eye);
     tween.to({ currentPupilSize: NORM_PUPIL }, 250);
@@ -257,7 +271,7 @@ function smugMug() {
     setBlinkRate(normalBlink, 3000);
     var tween = new TWEEN.Tween(eye);
     tween.to({
-        currentPupilSize: NORM_PUPIL,
+        currentPupilSize: SMALL_PUPIL,
         topEyelid: 2*UNIT,
         bottomEyelid: 4*UNIT }, 500);
     tween.start();
@@ -308,7 +322,8 @@ function vengeance() {
     tween.start();
 }
 
-function lookAt(direction, length) {
+function lookAt(direction, length, duration) {
+    var actualDuration = duration || 100;
     var pupilCenter = length / (IRIS_RADIUS + UNIT) * 100;
     var direction = Math.PI/180.0 * direction;
 
@@ -320,7 +335,7 @@ function lookAt(direction, length) {
         irisOffsetX: xOffset,
         irisOffsetY: yOffset,
         pupilOffsetX: 1.4 * xOffset,
-        pupilOffsetY: 1.4 * yOffset }, 100);
+        pupilOffsetY: 1.4 * yOffset }, actualDuration);
     tween.start();
 }
 
