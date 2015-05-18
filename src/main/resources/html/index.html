@@ -34,362 +34,90 @@ div.controls {
 
         <div class="controls">
             Pupil
-            <button onClick="tinyPupil()">On drugs</button>
-            <button onClick="smallPupil()">Small pupil</button>
-            <button onClick="normPupil()">Normal pupil</button>
-            <button onClick="bigPupil()">Big pupil</button>
-            <button onClick="massivePupil()">Another drug</button>
+            <button onClick="eye.tinyPupil()">On drugs</button>
+            <button onClick="eye.smallPupil()">Small pupil</button>
+            <button onClick="eye.normPupil()">Normal pupil</button>
+            <button onClick="eye.bigPupil()">Big pupil</button>
+            <button onClick="eye.massivePupil()">Another drug</button>
             <hr/>
             States
-            <button onClick="normal()">Normal</button>
-            <button onClick="sleepy()">Sleepy</button>
-            <button onClick="alertM()">Alert</button>
-            <button onClick="smugMug()">Smug</button>
-            <button onClick="vengeance()">Vengeance</button>
+            <button onClick="eye.normal()">Normal</button>
+            <button onClick="eye.sleepy()">Sleepy</button>
+            <button onClick="eye.alert()">Alert</button>
+            <button onClick="eye.smugMug()">Smug</button>
+            <button onClick="eye.vengeance()">Vengeance</button>
             <hr/>
             Look
-            <button onClick="lookAt(0,0)">Front</button>
-            <button onClick="lookAt(270, 100)">Left</button>
-            <button onClick="lookAt(90, 100)">Right</button>
-            <button onClick="lookAt(0, 100)">Up</button>
-            <button onClick="lookAt(180, 100)">Down</button>
+            <button onClick="eye.lookAt(0,0)">Front</button>
+            <button onClick="eye.lookAt(270, 100)">Left</button>
+            <button onClick="eye.lookAt(90, 100)">Right</button>
+            <button onClick="eye.lookAt(0, 100)">Up</button>
+            <button onClick="eye.lookAt(180, 100)">Down</button>
             <hr/>
             Action
-            <button onClick="fastBlink()">Fast blink</button>
-            <button onClick="slowBlink()">Relaxed blink</button>
-            <button onClick="normalBlink()">Normal blink</button>
+            <button onClick="eye.fastBlink()">Fast blink</button>
+            <button onClick="eye.slowBlink()">Relaxed blink</button>
+            <button onClick="eye.normalBlink()">Normal blink</button>
 
         </div>
 
+<canvas id="motion_debug" width="320" height="240" style="position:absolute; top:0; right: 0; border: solid 1px purple">
+</canvas>
+<canvas id="matrix_debug" width="320" height="240" style="position:absolute; top:240; right: 0; border: solid 1px green">
+</canvas>
+
+<div id="motion_container"></div>
+
+   <script src="tween.min.js"></script>
+    </body>
+    <script src="minioneye.js"></script>
+    <script src="motiondetect.js"></script>
 <script>
+var eye = new Minion.Eye('eye');
+var motion = new Minion.MotionDetector();
 
-var Colors = {
-    SKIN: '#FFD803',
-    HIGHLIGHT: 'rgba(255,255,255,0.7)',
-    PUPIL: 'black',
-    IRIS_OUTER: '#E87000',
-    IRIS_INNER: '#7E3700',
-    EYEBALL_OUTER: '#EEEEEE',
-    EYEBALL_INNER: 'white',
-}
-var EYEBALL_RADIUS = 200;
-var UNIT = EYEBALL_RADIUS / 8;
-var IRIS_RADIUS = EYEBALL_RADIUS / 2 + UNIT;
-var LARGE_PUPIL = 3 * UNIT;
-var NORM_PUPIL = 2 * UNIT;
-var SMALL_PUPIL = 1.5 * UNIT;
+function drawMotionSquares(context, motionData, w, h) {
+    var canvas = document.getElementById('matrix_debug');
+    var context = canvas.getContext('2d');
 
-var eye = {
-    currentPupilSize: 1.5*UNIT,
-    eyeballRadius: EYEBALL_RADIUS,
-    irisRadius: IRIS_RADIUS,
-    topEyelid: 1.3 * EYEBALL_RADIUS,
-    bottomEyelid: 1.3 * EYEBALL_RADIUS,
-    irisOffsetX: 0, irisOffsetY: 0,
-    pupilOffsetX: 0, pupilOffsetY: 0,
-
-};
-
-function drawTopEyelid(ctx, centerX, centerY) {
-    // Draw eyelids. The top lid is a bezier curve. The connecting points are
-    // slightly outside the eyeball itself, positioned on the center line.
-    // The control points are aligned with the connecting points on each side
-    // and the position of the control points determines the position of the
-    // eye lid. The lid goes 90% down when closed and the bottom eyelid
-    // does the rest.
-
-    // Yellow with a hint of red
-    ctx.fillStyle = Colors.SKIN;
-    ctx.beginPath();
-    ctx.moveTo(centerX - eye.eyeballRadius, centerY - eye.eyeballRadius);
-    ctx.lineTo(centerX - eye.eyeballRadius, centerY);
-
-    var p1 =  {
-        x: centerX - eye.eyeballRadius,
-        y: centerY
-    };
-    var p2 = {
-        x: centerX + eye.eyeballRadius,
-        y: centerY
-    };
-
-    // Move the y coordinate of the control points to
-    // open and close the eyelid
-    var ypos = centerY - eye.topEyelid;
-    var cp1 = {
-        x: p1.x,
-        y: ypos
-    };
-    var cp2 = {
-        x: p2.x,
-        y: ypos
-    };
-    ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, p2.x, p2.y);
-
-    ctx.lineTo(centerX + eye.eyeballRadius, centerY);
-    ctx.lineTo(centerX + eye.eyeballRadius, centerY - eye.eyeballRadius);
-    ctx.fill();
-
-    ctx.closePath();
-}
-
-function drawBottomEyelid(ctx, centerX, centerY) {
-    ctx.fillStyle = Colors.SKIN;
-    ctx.beginPath();
-    ctx.moveTo(centerX - eye.eyeballRadius, centerY + eye.eyeballRadius);
-    ctx.lineTo(centerX + eye.eyeballRadius, centerY + eye.eyeballRadius);
-    ctx.lineTo(centerX + eye.eyeballRadius, centerY);
-
-    var p1 = {
-        x: centerX + eye.eyeballRadius ,
-        y: centerY
+    for (var x = 0; x < w; x++) {
+        for (var y = 0; y < h; y++) {
+            context.beginPath();
+            var index = x + (y * w);
+            if (motionData[index] == 1) {
+                context.fillStyle = 'black';
+            }
+            else {
+                context.fillStyle = 'white';
+            }
+            context.fillRect(x*40, y*40, 40, 40);
+            context.closePath();
+        }
     }
-
-    var p2 = {
-        x: centerX - eye.eyeballRadius ,
-        y: centerY
-    }
-    var ypos = centerY + eye.bottomEyelid;
-    var cp1 = {
-        x: p1.x,
-        y: ypos
-    };
-    var cp2 = {
-        x: p2.x,
-        y: ypos
-    };
-    ctx.bezierCurveTo(cp1.x, cp1.y, cp2.x, cp2.y, p2.x, p2.y);
-
-    ctx.lineTo(centerX - eye.eyeballRadius, centerY);
-    ctx.fill();
-
-    ctx.closePath();
-}
-
-function drawHighlight(ctx, centerX, centerY) {
-    ctx.beginPath();
-    ctx.fillStyle = Colors.HIGHLIGHT;
-    ctx.arc(centerX - UNIT , centerY - UNIT , UNIT, 0, Math.PI*2);
-    ctx.fill();
-    ctx.closePath();
-}
-
-function drawPupil(ctx, centerX, centerY) {
-    ctx.beginPath();
-    ctx.fillStyle = Colors.PUPIL;
-    ctx.arc(centerX + eye.pupilOffsetX, centerY + eye.pupilOffsetY, eye.currentPupilSize, 0, Math.PI*2);
-    ctx.fill();
-    ctx.closePath();
-}
-
-function drawIris(ctx, centerX, centerY) {
-    // Iris
-    // Fill the entire iris with
-    // Four shades of brown:
-    // Dark brown background: CB5800
-    // Lighter inner circle: E87000
-    // solid triangles: B45700
-    // translucent triangles: 9E4D00
-    var x = centerX + eye.irisOffsetX;
-    var y = centerY + eye.irisOffsetY;
-    var irisGradient
-        = ctx.createRadialGradient(x, y, 100, x, y, 128);
-    irisGradient.addColorStop(0, Colors.IRIS_OUTER);
-    irisGradient.addColorStop(1, Colors.IRIS_INNER);
-
-    ctx.beginPath();
-    ctx.fillStyle = irisGradient;
-    ctx.arc(x, y, eye.irisRadius, 0, Math.PI*2);
-    ctx.fill();
-    ctx.closePath();
-
-    // TODO: Iris pattern
-}
-
-function drawEyeball(ctx, centerX, centerY) {
-    // Eyeball with light coming from top left
-    var eyeballGradient = ctx.createRadialGradient(centerX-10, centerY-10, 175, centerX, centerY, eye.eyeballRadius);
-    eyeballGradient.addColorStop(1, Colors.EYEBALL_OUTER);
-    eyeballGradient.addColorStop(0, Colors.EYEBALL_INNER);
-    ctx.beginPath();
-    ctx.fillStyle = eyeballGradient;
-    ctx.arc(centerX, centerY, eye.eyeballRadius, 0, Math.PI*2);
-    ctx.closePath();
-    ctx.fill();
-}
-function drawEye() {
-    var canvas = document.getElementById('eye');
-    var ctx = canvas.getContext('2d');
-    var centerX = canvas.width/2;
-    var centerY = canvas.height/2;
-    ctx.beginPath();
-    ctx.fillStyle = Colors.SKIN;
-    ctx.fillRect(0,0, canvas.width, canvas.height);
-    ctx.closePath();
-    drawEyeball(ctx, centerX, centerY);
-
-    drawIris(ctx, centerX, centerY);
-
-    drawPupil(ctx, centerX, centerY);
-
-    drawHighlight(ctx, centerX, centerY);
-
-    drawTopEyelid(ctx, centerX, centerY);
-    drawBottomEyelid(ctx, centerX, centerY);
-}
-
-function tinyPupil() {
-    var tween = new TWEEN.Tween(eye);
-    tween.to({ currentPupilSize: 5 }, 250);
-    tween.start();
-}
-
-function smallPupil() {
-    var tween = new TWEEN.Tween(eye);
-    tween.to({ currentPupilSize: SMALL_PUPIL }, 250);
-    tween.start();
-}
-
-function bigPupil() {
-    var tween = new TWEEN.Tween(eye);
-    tween.to({ currentPupilSize: LARGE_PUPIL }, 250);
-    tween.start();
-}
-
-function massivePupil() {
-    var tween = new TWEEN.Tween(eye);
-    tween.to({ currentPupilSize: 1.4*LARGE_PUPIL }, 250);
-    tween.start();
-}
-function normPupil() {
-    var tween = new TWEEN.Tween(eye);
-    tween.to({ currentPupilSize: NORM_PUPIL }, 250);
-    tween.start();
-}
-
-function smugMug() {
-    setBlinkRate(normalBlink, 3000);
-    var tween = new TWEEN.Tween(eye);
-    tween.to({
-        currentPupilSize: SMALL_PUPIL,
-        topEyelid: 2*UNIT,
-        bottomEyelid: 4*UNIT }, 500);
-    tween.start();
-}
-
-function sleepy() {
-    setBlinkRate(slowBlink, 6000);
-    var tween = new TWEEN.Tween(eye);
-    tween.to({
-        currentPupilSize: LARGE_PUPIL,
-        topEyelid: -UNIT,
-        bottomEyelid: 5*UNIT }, 500);
-    tween.start();
-}
-
-function alertM() {
-    setBlinkRate(fastBlink, 2000);
-
-    var tween = new TWEEN.Tween(eye);
-    tween.to({
-        currentPupilSize: SMALL_PUPIL,
-        topEyelid: 1.3*EYEBALL_RADIUS,
-        bottomEyelid: 1.3*EYEBALL_RADIUS }, 500);
-    tween.start();
-
-}
-
-
-function normal() {
-    setBlinkRate(normalBlink, 5000);
-
-    var tween = new TWEEN.Tween(eye);
-    tween.to({
-        currentPupilSize: NORM_PUPIL,
-        topEyelid: 1.2*EYEBALL_RADIUS,
-        bottomEyelid: 1.2*EYEBALL_RADIUS }, 500);
-    tween.start();
-}
-
-function vengeance() {
-    setBlinkRate(slowBlink, 4000);
-
-    var tween = new TWEEN.Tween(eye);
-    tween.to({
-        currentPupilSize: LARGE_PUPIL,
-        topEyelid: 1.3*EYEBALL_RADIUS,
-        bottomEyelid: UNIT }, 500);
-    tween.start();
-}
-
-function lookAt(direction, length, duration) {
-    var actualDuration = duration || 100;
-    var pupilCenter = length / (IRIS_RADIUS + UNIT) * 100;
-    var direction = Math.PI/180.0 * direction;
-
-    var xOffset = Math.round(pupilCenter * Math.sin(direction), 2);
-    var yOffset = Math.round(pupilCenter * -Math.cos(direction), 2);
-
-    var tween = new TWEEN.Tween(eye);
-    tween.to({
-        irisOffsetX: xOffset,
-        irisOffsetY: yOffset,
-        pupilOffsetX: 1.4 * xOffset,
-        pupilOffsetY: 1.4 * yOffset }, actualDuration);
-    tween.start();
-}
-
-function doBlink(duration) {
-    var currentTop = eye.topEyelid;
-    var currentBottom = eye.bottomEyelid;
-
-    var down = new TWEEN.Tween(eye);
-    down.to({ topEyelid: -2*UNIT, bottomEyelid: UNIT }, duration);
-
-    var up = new TWEEN.Tween(eye);
-    up.to({ topEyelid: currentTop, bottomEyelid: currentBottom }, duration);
-
-    down.chain(up);
-    down.start();
-}
-
-function fastBlink() {
-    doBlink(50);
-}
-
-function slowBlink() {
-    doBlink(250);
-
-}
-
-function normalBlink() {
-    doBlink(100);
-}
-
-function animate() {
-    requestAnimationFrame(animate);
-    TWEEN.update();
-    drawEye();
-}
-
-var blinkTimer;
-function setBlinkRate(func, duration) {
-    if (blinkTimer) {
-        window.clearInterval(blinkTimer);
-    }
-    blinkTimer = window.setInterval(func, duration);
 }
 
 document.addEventListener('DOMContentLoaded', function(event) {
-    animate();
-    setBlinkRate(normalBlink, 5000);
+    eye.setBlinkRate(eye.normalBlink, 5000);
+    eye.animate();
+    motion.setup('motion_container');
+    motion.addEventListener('MotionDetected', function(motionData) {
+        var canvas = document.getElementById('motion_debug');
+        var context = canvas.getContext('2d');
+        var imageData = context.createImageData(320, 240);
+        motion.getMotionImage(imageData);
+        context.putImageData(imageData, 0, 0);
+        drawMotionSquares(context, motionData, motion.getDifferenceWidth(), motion.getDifferenceHeight());
+    });
+    motion.addEventListener('NoMotionDetected', function() {
+        var canvas = document.getElementById('matrix_debug');
+        var context = canvas.getContext('2d');
+        context.beginPath();
+        context.fillStyle = 'grey';
+        context.fillRect(0, 0, 320, 240);
+        context.closePath();
+    })
 });
 
-
 </script>
-<!-- https://raw.githubusercontent.com/sole/tween.js/r14/build/tween.min.js -->
-<script src="tween.min.js"></script>
-    </body>
-
 
 </html>
