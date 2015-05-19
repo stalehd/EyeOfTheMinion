@@ -18,7 +18,7 @@ div.eyeback {
 div.controls {
     position: absolute;
     top: 50px;
-    left: 800px;
+    left: 1080px;
     width: 100px;
     height: 500px;
     background-color: silver;
@@ -28,7 +28,7 @@ div.controls {
     </head>
     <body>
         <div class="eyeback">
-            <canvas id="eye" width="640" height="480">
+            <canvas id="eye" width="1024" height="768">
             </canvas>
         </div>
 
@@ -61,9 +61,9 @@ div.controls {
 
         </div>
 
-<canvas id="motion_debug" width="320" height="240" style="position:absolute; top:0; right: 0; border: solid 1px purple">
-</canvas>
-<canvas id="matrix_debug" width="320" height="240" style="position:absolute; top:240; right: 0; border: solid 1px green">
+<canvas id="motion_debug"
+    width="320" height="240"
+    style="position:absolute; top:0; right: 0">
 </canvas>
 
 <div id="motion_container"></div>
@@ -72,10 +72,10 @@ div.controls {
     </body>
     <script src="minioneye.js"></script>
     <script src="motiondetect.js"></script>
+    <script src="blobdetect.js"></script>
 <script>
 var eye = new Minion.Eye('eye');
 var motion = new Minion.MotionDetector();
-
 function drawMotionSquares(context, motionData, w, h) {
     var canvas = document.getElementById('matrix_debug');
     var context = canvas.getContext('2d');
@@ -96,25 +96,47 @@ function drawMotionSquares(context, motionData, w, h) {
     }
 }
 
+/**
+ * Do a debug dump of the data
+ */
+function debugDump(context, imageData, rectangles) {
+    if (imageData) {
+        context.putImageData(imageData, 0, 0);
+    }
+    var cellSize = 40;
+    var colors = [ 'red', 'green', 'blue', 'silver', 'orange', 'black', 'purple' ];
+    rectangles.forEach(function(rect, index, array) {
+        context.beginPath();
+        context.lineWidth = 2.0;
+        context.strokeStyle = colors[index];
+        context.fillStyle = colors[index];
+        context.strokeRect(rect.x * cellSize, rect.y * cellSize, rect.w * cellSize, rect.h * cellSize);
+        context.globalAlpha = 0.5;
+        context.fillRect(rect.x * cellSize, rect.y * cellSize, rect.w * cellSize, rect.h * cellSize);
+        context.globalAlpha = 1.0;
+        context.closePath();
+    });
+};
+
+
 document.addEventListener('DOMContentLoaded', function(event) {
     eye.setBlinkRate(eye.normalBlink, 5000);
     eye.animate();
     motion.setup('motion_container');
+
     motion.addEventListener('MotionDetected', function(motionData) {
         var canvas = document.getElementById('motion_debug');
         var context = canvas.getContext('2d');
-        var imageData = context.createImageData(320, 240);
-        motion.getMotionImage(imageData);
-        context.putImageData(imageData, 0, 0);
-        drawMotionSquares(context, motionData, motion.getDifferenceWidth(), motion.getDifferenceHeight());
+        var image = motion.getLastFrame();
+
+        var blob = new Minion.BlobDetector(motionData,
+            motion.getDifferenceWidth(), motion.getDifferenceHeight());
+        var rectangles = blob.findBlobs();
+        debugDump(context, image, rectangles);
     });
+
     motion.addEventListener('NoMotionDetected', function() {
-        var canvas = document.getElementById('matrix_debug');
-        var context = canvas.getContext('2d');
-        context.beginPath();
-        context.fillStyle = 'grey';
-        context.fillRect(0, 0, 320, 240);
-        context.closePath();
+      // Do nothing.
     })
 });
 

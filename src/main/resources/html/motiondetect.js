@@ -1,7 +1,7 @@
 /**
  * A quick and dirty motion detector script
  */
-
+// TODO: Replace bit array with easier to use class.
 
 /**
  * Do simple motion detection based on diff between previous and current image
@@ -98,6 +98,7 @@ Minion.MotionDetector = function() {
     this.referenceFrame = null;
     this.threshold = 64;
     this.pixelSize = 40;
+    this.lastFrame = null;
 };
 
 /**
@@ -119,6 +120,7 @@ Minion.MotionDetector.prototype.updateReferenceFrame = function(newFrameData) {
             index += 4;
         }
     }
+    this.lastFrame = newFrameData;
 };
 
 Minion.MotionDetector.prototype.addFrame = function(currentImageData) {
@@ -243,9 +245,13 @@ Minion.MotionDetector.prototype.getDifferenceHeight = function() {
     return this.sourceHeight/this.pixelSize;
 };
 
-Minion.MotionDetector.prototype.getReferenceFram = function() {
+Minion.MotionDetector.prototype.getReferenceFrame = function() {
     return this.referenceFrame;
 };
+
+Minion.MotionDetector.prototype.getLastFrame = function() {
+    return this.lastFrame;
+}
 
 Minion.MotionDetector.prototype.getLastDifference = function() {
     return this.downsampledArray;
