@@ -34,154 +34,20 @@ div.controls {
         <div class="eyeback">
             <canvas id="eye" width="400" height="400">
         </div>
-        </div>
-
-        <!-- <div class="controls">
-            Pupil
-            <button onClick="eye.tinyPupil()">On drugs</button>
-            <button onClick="eye.smallPupil()">Small pupil</button>
-            <button onClick="eye.normPupil()">Normal pupil</button>
-            <button onClick="eye.bigPupil()">Big pupil</button>
-            <button onClick="eye.massivePupil()">Another drug</button>
-            <hr/>
-            States
-            <button onClick="eye.normal()">Normal</button>
-            <button onClick="eye.sleepy()">Sleepy</button>
-            <button onClick="eye.alert()">Alert</button>
-            <button onClick="eye.smugMug()">Smug</button>
-            <button onClick="eye.vengeance()">Vengeance</button>
-            <hr/>
-            Look
-            <button onClick="eye.lookAt(0,0)">Front</button>
-            <button onClick="eye.lookAt(270, 100)">Left</button>
-            <button onClick="eye.lookAt(90, 100)">Right</button>
-            <button onClick="eye.lookAt(0, 100)">Up</button>
-            <button onClick="eye.lookAt(180, 100)">Down</button>
-            <hr/>
-            Action
-            <button onClick="eye.fastBlink()">Fast blink</button>
-            <button onClick="eye.slowBlink()">Relaxed blink</button>
-            <button onClick="eye.normalBlink()">Normal blink</button>
-
-        </div> -->
-
-<!-- <canvas id="motion_debug"
-    width="320" height="240"
-    style="position:absolute; top:0; right: 0">
-</canvas> -->
-
-<div id="motion_container"></div>
-
-   <script src="tween.min.js"></script>
+        <div id="motion_container"></div>
     </body>
+
+    <script src="tween.min.js"></script>
     <script src="minioneye.js"></script>
     <script src="motiondetect.js"></script>
     <script src="blobdetect.js"></script>
+    <script src="utils.js"></script>
+    <script src="brain.js"></script>
+
 <script>
+
 var eye = new Minion.Eye('eye');
 var motion = new Minion.MotionDetector();
-function drawMotionSquares(context, motionData, w, h) {
-    var canvas = document.getElementById('matrix_debug');
-    var context = canvas.getContext('2d');
-
-    for (var x = 0; x < w; x++) {
-        for (var y = 0; y < h; y++) {
-            context.beginPath();
-            var index = x + (y * w);
-            if (motionData[index] == 1) {
-                context.fillStyle = 'black';
-            }
-            else {
-                context.fillStyle = 'white';
-            }
-            context.fillRect(x*40, y*40, 40, 40);
-            context.closePath();
-        }
-    }
-}
-
-/**
- * Do a debug dump of the data
- */
-function debugDump(context, imageData, rectangles, x, y, direction) {
-    if (imageData) {
-        context.putImageData(imageData, 0, 0);
-    }
-    var cellSize = 40;
-    var colors = [ 'red', 'green', 'blue', 'silver', 'orange', 'black', 'purple' ];
-    rectangles.forEach(function(rect, index, array) {
-        context.beginPath();
-        context.lineWidth = 2.0;
-        context.strokeStyle = colors[index];
-        context.fillStyle = colors[index];
-        context.strokeRect(rect.x * cellSize, rect.y * cellSize, rect.w * cellSize, rect.h * cellSize);
-        context.globalAlpha = 0.5;
-        context.fillRect(rect.x * cellSize, rect.y * cellSize, rect.w * cellSize, rect.h * cellSize);
-        context.closePath();
-    });
-
-    if (imageData) {
-        context.beginPath();
-        context.lineWidth = 3.0;
-        context.strokeStyle = 'black';
-        context.moveTo(imageData.width/2, imageData.height/2);
-        context.lineTo(x * cellSize, y * cellSize);
-        context.stroke();
-    }
-
-    context.beginPath();
-    context.globalAlpha = 1.0;
-    context.font = '15px sans-serif';
-    context.fillStyle = 'yellow';
-    context.fillText('lookAt(' + Math.round(direction.angle, 2) + ', ' + Math.round(direction.length,1) + ')', 10, 20);
-    context.closePath();
-
-};
-
-function toDegrees(radians) {
-    var degrees = radians * 180/Math.PI;
-    while (degrees < 0) {
-        degrees += 360;
-    }
-    while (degrees > 360) {
-        degrees -= 360;
-    }
-    return degrees;
-}
-
-function coordinateToPolar(x, y, w, h) {
-    // Map coordinates to angle and length. This is a bit headache-inducing since
-    // there are different coordinate systems, different types of angles *and*
-    // the motion grid is inverted left-right
-    var centerx = w/2;
-    var centery = h/2;
-
-    // Length is a percentage
-    var dx = -(centerx - x);
-    var dy = centery - y;
-    if (dx == 0 && dy == 0) {
-        // Look forward
-        return { angle: 0.0, length: 0.0 };
-    }
-    // this is the easy one: The length of the line
-    var add = -Math.PI/2;
-    if (dy < 0) {
-        dy = -dy;
-        dx = -dx;
-        add += Math.PI;
-    }
-    var length = Math.sqrt((dx * dx) + (dy * dy)) / centerx * 100;
-
-    // The angle is a bit more difficult. The atan2 function works between π and -π
-    // with 0 along the x-axis. This means that we have to adjust for positive/negative
-    // y values
-    if (dy < 0) {
-
-    }
-    var angle = toDegrees(add + Math.atan2(Math.abs(dy), dx));
-
-    return { angle: angle, length: length };
-}
 
 var NORMAL = 'normal';
 var ALERT = 'alert';
@@ -200,8 +66,7 @@ document.addEventListener('DOMContentLoaded', function(event) {
             eye.alert();
         }
         lastmotion = Date.now();
-        //var canvas = document.getElementById('motion_debug');
-        //var context = canvas.getContext('2d');
+
         var image = motion.getLastFrame();
 
         var w = motion.getDifferenceWidth();
@@ -218,7 +83,6 @@ document.addEventListener('DOMContentLoaded', function(event) {
 
         eye.lookAt(direction.angle, direction.length);
 
-        //debugDump(context, image, rectangles, x, y, direction);
     });
 
     motion.addEventListener('NoMotionDetected', function() {
