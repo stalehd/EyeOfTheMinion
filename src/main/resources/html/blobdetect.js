@@ -119,7 +119,7 @@ function checkWorkList(grid, checkList, blob) {
 
 /**
  * Return a list of rectangles (x, y, w, h, size) covering
- * all of the blobs. They come in no particular order.
+ * all of the blobs. They are sorted by size, biggest first.
  */
 Minion.BlobDetector.prototype.findBlobs = function() {
     // Find first element with a non-null value
@@ -159,9 +159,11 @@ Minion.BlobDetector.prototype.findBlobs = function() {
             y: ystart,
             w: xend - xstart + 1,
             h: yend - ystart + 1,
-            size: (xend - xstart) * (yend - ystart)
+            size: (xend - xstart + 1) * (yend - ystart + 1)
         });
     });
 
-    return rectangles;
+    return rectangles.sort(function(a,b) {
+        return b.size - a.size;
+    });
 };

@@ -1,7 +1,7 @@
 
 var MinionColors = {
     SKIN: '#FFD803',
-    HIGHLIGHT: 'rgba(255,255,255,0.7)',
+    HIGHLIGHT: 'rgba(255,255,255,0.5)',
     PUPIL: 'black',
     IRIS_OUTER: '#E87000',
     IRIS_INNER: '#7E3700',
@@ -95,7 +95,7 @@ function drawBottomEyelid(eye, ctx, centerX, centerY) {
 function drawHighlight(eye, ctx, centerX, centerY) {
     ctx.beginPath();
     ctx.fillStyle = MinionColors.HIGHLIGHT;
-    ctx.arc(centerX - UNIT , centerY - UNIT , UNIT, 0, Math.PI*2);
+    ctx.arc(centerX - UNIT , centerY - UNIT , UNIT*0.5, 0, Math.PI*2);
     ctx.fill();
     ctx.closePath();
 }

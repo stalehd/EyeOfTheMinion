@@ -4,16 +4,14 @@
 
 <style>
 body {
-    background-color: #eeeeee;
+    background-color: #FFD803;
     font-family: Sans-serif;
+    margin: 0;
+    padding: 0;
 }
 div.eyeback {
-    position: absolute;
-    top: 50px;
-    left: 50px;
-    border: 1px solid black;
-    width: 700px;
-    height: 500px;
+    margin: 0;
+    padding: 0;
 }
 div.controls {
     position: absolute;
@@ -24,15 +22,21 @@ div.controls {
     background-color: silver;
     border: 1px solid black;
 }
+#eye {
+    height: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
 </style>
     </head>
     <body>
         <div class="eyeback">
-            <canvas id="eye" width="1024" height="768">
-            </canvas>
+            <canvas id="eye" width="400" height="400">
+        </div>
         </div>
 
-        <div class="controls">
+        <!-- <div class="controls">
             Pupil
             <button onClick="eye.tinyPupil()">On drugs</button>
             <button onClick="eye.smallPupil()">Small pupil</button>
@@ -59,12 +63,12 @@ div.controls {
             <button onClick="eye.slowBlink()">Relaxed blink</button>
             <button onClick="eye.normalBlink()">Normal blink</button>
 
-        </div>
+        </div> -->
 
-<canvas id="motion_debug"
+<!-- <canvas id="motion_debug"
     width="320" height="240"
     style="position:absolute; top:0; right: 0">
-</canvas>
+</canvas> -->
 
 <div id="motion_container"></div>
 
@@ -99,7 +103,7 @@ function drawMotionSquares(context, motionData, w, h) {
 /**
  * Do a debug dump of the data
  */
-function debugDump(context, imageData, rectangles) {
+function debugDump(context, imageData, rectangles, x, y, direction) {
     if (imageData) {
         context.putImageData(imageData, 0, 0);
     }
@@ -113,11 +117,77 @@ function debugDump(context, imageData, rectangles) {
         context.strokeRect(rect.x * cellSize, rect.y * cellSize, rect.w * cellSize, rect.h * cellSize);
         context.globalAlpha = 0.5;
         context.fillRect(rect.x * cellSize, rect.y * cellSize, rect.w * cellSize, rect.h * cellSize);
-        context.globalAlpha = 1.0;
         context.closePath();
     });
+
+    if (imageData) {
+        context.beginPath();
+        context.lineWidth = 3.0;
+        context.strokeStyle = 'black';
+        context.moveTo(imageData.width/2, imageData.height/2);
+        context.lineTo(x * cellSize, y * cellSize);
+        context.stroke();
+    }
+
+    context.beginPath();
+    context.globalAlpha = 1.0;
+    context.font = '15px sans-serif';
+    context.fillStyle = 'yellow';
+    context.fillText('lookAt(' + Math.round(direction.angle, 2) + ', ' + Math.round(direction.length,1) + ')', 10, 20);
+    context.closePath();
+
 };
 
+function toDegrees(radians) {
+    var degrees = radians * 180/Math.PI;
+    while (degrees < 0) {
+        degrees += 360;
+    }
+    while (degrees > 360) {
+        degrees -= 360;
+    }
+    return degrees;
+}
+
+function coordinateToPolar(x, y, w, h) {
+    // Map coordinates to angle and length. This is a bit headache-inducing since
+    // there are different coordinate systems, different types of angles *and*
+    // the motion grid is inverted left-right
+    var centerx = w/2;
+    var centery = h/2;
+
+    // Length is a percentage
+    var dx = -(centerx - x);
+    var dy = centery - y;
+    if (dx == 0 && dy == 0) {
+        // Look forward
+        return { angle: 0.0, length: 0.0 };
+    }
+    // this is the easy one: The length of the line
+    var add = -Math.PI/2;
+    if (dy < 0) {
+        dy = -dy;
+        dx = -dx;
+        add += Math.PI;
+    }
+    var length = Math.sqrt((dx * dx) + (dy * dy)) / centerx * 100;
+
+    // The angle is a bit more difficult. The atan2 function works between π and -π
+    // with 0 along the x-axis. This means that we have to adjust for positive/negative
+    // y values
+    if (dy < 0) {
+
+    }
+    var angle = toDegrees(add + Math.atan2(Math.abs(dy), dx));
+
+    return { angle: angle, length: length };
+}
+
+var NORMAL = 'normal';
+var ALERT = 'alert';
+var SLEEPY = 'sleepy';
+var lastmotion = Date.now();
+var currentState = NORMAL;
 
 document.addEventListener('DOMContentLoaded', function(event) {
     eye.setBlinkRate(eye.normalBlink, 5000);
@@ -125,19 +195,52 @@ document.addEventListener('DOMContentLoaded', function(event) {
     motion.setup('motion_container');
 
     motion.addEventListener('MotionDetected', function(motionData) {
-        var canvas = document.getElementById('motion_debug');
-        var context = canvas.getContext('2d');
+
+        if (currentState != ALERT) {
+            eye.alert();
+        }
+        lastmotion = Date.now();
+        //var canvas = document.getElementById('motion_debug');
+        //var context = canvas.getContext('2d');
         var image = motion.getLastFrame();
 
-        var blob = new Minion.BlobDetector(motionData,
-            motion.getDifferenceWidth(), motion.getDifferenceHeight());
+        var w = motion.getDifferenceWidth();
+        var h = motion.getDifferenceHeight();
+
+        var blob = new Minion.BlobDetector(motionData, w, h);
         var rectangles = blob.findBlobs();
-        debugDump(context, image, rectangles);
+
+        var r = rectangles[0];
+        var x = r.x + r.w/2;
+        var y = r.y + r.h/2;
+
+        var direction = coordinateToPolar(x, y, w, h);
+
+        eye.lookAt(direction.angle, direction.length);
+
+        //debugDump(context, image, rectangles, x, y, direction);
     });
 
     motion.addEventListener('NoMotionDetected', function() {
-      // Do nothing.
-    })
+        var idle_time = Date.now() - lastmotion;
+        if (currentState == ALERT && idle_time > 10000) {
+            currentState = NORMAL;
+            eye.lookAt(Math.random() * 360, Math.random() * 1);
+            return;
+        }
+
+        if (currentState == NORMAL && idle_time > 30000) {
+            eye.sleepy();
+            currentState = SLEEPY;
+        }
+
+        // Emulate micro movements
+        if (Math.random() < 0.1) {
+            eye.lookAt(Math.random() * 360, Math.random() * 2);
+        }
+        // Sleep when > 10 minutes
+    });
+
 });
 
 </script>
