@@ -21,7 +21,6 @@ def api_template():
 def state():
     return json.jsonify(implemented='nopes')
 
-
 @app.route('/api/look', methods=['GET', 'PUT'])
 def look():
     return json.jsonify(implemented='nopes')
@@ -50,16 +49,6 @@ def blinkenlicht(licht_id):
 # PUT /api/stfu
 # GET|PUT /api/blinkenlicht/[123] { "mode": "on|off" }
 #
-
-
-@app.route('/api/commands')
-def list_commands():
-    return json.jsonify(implemented='nopes')
-
-
-@app.route('/api/commands/next')
-def next_command_in_queue():
-    return json.jsonify(implemented='nopes')
 
 @app.route('/mcp/')
 def minion_control_panel():
