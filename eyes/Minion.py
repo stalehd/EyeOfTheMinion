@@ -1,11 +1,11 @@
-from flask import Flask
+from flask import Flask, redirect
 from flask import json
 
 app = Flask(__name__, static_folder='html')
 
 @app.route("/")
 def index():
-    return json.jsonify(static='html/index.html', api='api/')
+    return redirect('/html/index.html');
 
 @app.route("/api")
 def api_template():
@@ -38,7 +38,7 @@ def stfu():
 
 
 @app.route('/api/blinkenlicht/<int:licht_id>', methods=['GET', 'PUT'])
-def meter(licht_id):
+def blinkenlicht(licht_id):
     return json.jsonify(implemented='nopes')
 
 #
@@ -61,6 +61,10 @@ def list_commands():
 def next_command_in_queue():
     return json.jsonify(implemented='nopes')
 
+@app.route('/mcp/')
+def minion_control_panel():
+    return redirect('html/mcp/index.html')
+    
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
