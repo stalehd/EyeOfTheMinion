@@ -129,6 +129,14 @@
 			<button onClick="eyeBlinkRate(10000)">.1 Hz</button>
 		</div>
 
+		<div class="button-cluster">
+			<h2>Look</h2>
+			<button onClick="eyeLook(0, 1.0)">Up</button>
+			<button onClick="eyeLook(180, 1.0)">Down</button>
+			<button onClick="eyeLook(90, 1.0)">Left</button>
+			<button onClick="eyeLook(270, 1.0)">Right</button>
+			<button onClick="eyeLook(0, 0.0)">Center</button>
+		</div>
 	</body>	
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 	<script>
@@ -183,6 +191,10 @@
 
 	function eyeBlinkRate(newSpeed) {
 		doRest('/api/eye/blinkrate/' + newSpeed, 'PUT');
+	}
+
+	function eyeLook(direction, distance) {
+		doRest('/api/eye/look/' + direction + '/' + Math.round(distance * 100), 'PUT');
 	}
 	</script>
 </html>

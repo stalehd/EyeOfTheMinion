@@ -34,77 +34,48 @@ div.controls {
         <div class="eyeback">
             <canvas id="eye" width="400" height="400">
         </div>
-        <div id="motion_container"></div>
     </body>
 
     <script src="tween.min.js"></script>
     <script src="minioneye.js"></script>
-    <script src="motiondetect.js"></script>
-    <script src="blobdetect.js"></script>
-    <script src="utils.js"></script>
-    <script src="brain.js"></script>
+    <script src="minionws.js"></script>
 
 <script>
 
 var eye = new Minion.Eye('eye');
-var motion = new Minion.MotionDetector();
 
-var NORMAL = 'normal';
-var ALERT = 'alert';
-var SLEEPY = 'sleepy';
-var lastmotion = Date.now();
-var currentState = NORMAL;
+function toggleFullscreen() {
+  if (!document.fullscreenElement &&    // alternative standard method
+      !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {  // current working methods
+    if (document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen();
+    } else if (document.documentElement.msRequestFullscreen) {
+      document.documentElement.msRequestFullscreen();
+    } else if (document.documentElement.mozRequestFullScreen) {
+      document.documentElement.mozRequestFullScreen();
+    } else if (document.documentElement.webkitRequestFullscreen) {
+      document.documentElement.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+    }
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    }
+  }
+};
 
 document.addEventListener('DOMContentLoaded', function(event) {
-    eye.setBlinkRate(eye.normalBlink, 5000);
+    eye.normal();
     eye.animate();
-    motion.setup('motion_container');
+});
 
-    motion.addEventListener('MotionDetected', function(motionData) {
-
-        if (currentState != ALERT) {
-            eye.alert();
-        }
-        lastmotion = Date.now();
-
-        var image = motion.getLastFrame();
-
-        var w = motion.getDifferenceWidth();
-        var h = motion.getDifferenceHeight();
-
-        var blob = new Minion.BlobDetector(motionData, w, h);
-        var rectangles = blob.findBlobs();
-
-        var r = rectangles[0];
-        var x = r.x + r.w/2;
-        var y = r.y + r.h/2;
-
-        var direction = coordinateToPolar(x, y, w, h);
-
-        eye.lookAt(direction.angle, direction.length);
-
-    });
-
-    motion.addEventListener('NoMotionDetected', function() {
-        var idle_time = Date.now() - lastmotion;
-        if (currentState == ALERT && idle_time > 10000) {
-            currentState = NORMAL;
-            eye.lookAt(Math.random() * 360, Math.random() * 1);
-            return;
-        }
-
-        if (currentState == NORMAL && idle_time > 30000) {
-            eye.sleepy();
-            currentState = SLEEPY;
-        }
-
-        // Emulate micro movements
-        if (Math.random() < 0.1) {
-            eye.lookAt(Math.random() * 360, Math.random() * 2);
-        }
-        // Sleep when > 10 minutes
-    });
-
+document.addEventListener('click', function() {
+    toggleFullscreen();
 });
 
 </script>
