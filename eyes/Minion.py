@@ -1,5 +1,6 @@
-from flask import Flask, redirect
+from flask import Flask, redirect, request
 from flask import json
+import os
 
 app = Flask(__name__, static_folder='html')
 
@@ -17,8 +18,11 @@ def api_template():
         blinkenlicht='/api/blinkenlicht/[123]')
 
 
-@app.route('/api/state', methods=['GET', 'PUT'])
+@app.route('/api/state', methods=['GET', 'POST'])
 def state():
+    print request.form
+    sound = request.form['state']
+    os.system('play html/sounds/' + command + '.aiff')
     return json.jsonify(implemented='nopes')
 
 @app.route('/api/look', methods=['GET', 'PUT'])

@@ -143,7 +143,7 @@
 
 		function sounds(soundtype) {
 			var newState = { state: soundtype };
-			$.ajax({ method: 'PUT', url: '/api/state', data: soundtype })
+			$.ajax({ method: 'POST', url: '/api/state', data: soundtype })
 				.done(function(data) {
 					alert('Computer says YES');
 				})
