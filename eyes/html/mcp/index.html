@@ -161,7 +161,7 @@
 
 	function meter(meterno, meterValue) {
 		var value = { value: meterValue };
-		doRest('/api/meters/' + (meterno - 1), 'PUT', meterValue);
+		doRest('/api/meters/' + (meterno - 1), 'PUT', value);
 	}
 
 	function sounds(soundtype) {
