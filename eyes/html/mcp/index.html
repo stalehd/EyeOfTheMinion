@@ -96,62 +96,93 @@
 			<button onClick="sounds('ooooh')">Wonder</buttone>
 		</div>
 
+		<div class="button-cluster">
+			<h2>Eye Style</h2>
+			<button onClick="eyeState('sleepy')">Sleepy</button>
+			<button onClick="eyeState('smug')">Smug</button>
+			<button onClick="eyeState('normal')">Normal</button>
+			<button onClick="eyeState('alert')">Alert</button>
+			<button onClick="eyeState('vengeance')">Anger</button>
+		</div>
+
+		<div class="button-cluster">
+			<h2>Pupil</h2>
+			<button onClick="eyePupil('tiny')">Tiny</button>
+			<button onClick="eyePupil('small')">Small</button>
+			<button onClick="eyePupil('normal')">Normal</button>
+			<button onClick="eyePupil('big')">Big</button>
+			<button onClick="eyePupil('huge')">Biggab</button>
+		</div>
+
+		<div class="button-cluster">
+			<h2>Blinking</h2>
+			<button onClick="eyeBlink(250)">Slow</button>
+			<button onClick="eyeBlink(100)">Normal</button>
+			<button onClick="eyeBlink(50)">Fast</button>
+		</div>
+
+		<div class="button-cluster">
+			<h2>Blink rate</h2>
+			<button onClick="eyeBlinkRate(1000)">1 Hz</button>
+			<button onClick="eyeBlinkRate(2000)">&frac12; Hz</button>
+			<button onClick="eyeBlinkRate(4000)">&frac14; Hz</button>
+			<button onClick="eyeBlinkRate(10000)">.1 Hz</button>
+		</div>
+
 	</body>	
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 	<script>
-		function stfu() {
-			$.ajax({ method: 'PUT', url: '/api/stfu' })
-				.done(function(data) {
-					alert('Computer says YES');
-				})
-				.fail(function(jqXHR, msg) {
-					alert('Computer says NO (' + msg + ')');
-				});
-		}
 
-		function blinkenlightsOn(lightno) {
-			$.ajax({ method: 'PUT', url: '/api/blinkenlicht/' + (lightno - 1) })
-				.done(function(data) {
-					alert('Computer says YES');
-				})
-				.fail(function(jqXHR, msg) {
-					alert('Computer says NO (' + msg + ')');
-				});
-		}
+	function doRest(url, method, reqData) {
+		$.ajax({ 
+				method: method, 
+				url: url, 
+				data: reqData 
+			})
+			.done(function(data) {
+				// do nothing
+			})
+			.fail(function(jqXHR, msg) {
+				alert('Computer says NO (' + msg + ')');
+			});
+	}
 
-		function blinkenlightsOff(lightno) {
-			$.ajax({ method: 'DELETE', url: '/api/blinkenlicht/' + (lightno - 1) })
-				.done(function(data) {
-					alert('Computer says YES');
-				})
-				.fail(function(jqXHR, msg) {
-					alert('Computer says NO (' + msg + ')');
-				});
-		}
+	function stfu() {
+		doRest('/api/stfu', 'PUT');
+	}
 
-		function meter(meterno, meterValue) {
-			var value = { value: meterValue };
+	function blinkenlightsOn(lightno) {
+		doRest('/api/blinkenlicht/' + (lightno - 1), 'PUT')
+	}
 
-			$.ajax({ method: 'PUT', url: '/api/meters/' + (meterno - 1), data: meterValue})
-				.done(function(data) {
-					alert('Computer says YES');
-				})
-				.fail(function(jqXHR, msg) {
-					alert('Computer says NO (' + msg + ')');
-				});
-		}
+	function blinkenlightsOff(lightno) {
+		doRest('/api/blinkenlicht/' + (lightno - 1), 'DELETE')
+	}
 
-		function sounds(soundtype) {
-			var newState = { state: soundtype };
-			$.ajax({ method: 'POST', url: '/api/state', data: soundtype })
-				.done(function(data) {
-					alert('Computer says YES');
-				})
-				.fail(function(jqXHR, msg) {
-					alert('Computer says NO (' + msg + ')');
-				});
-		
-		}
+	function meter(meterno, meterValue) {
+		var value = { value: meterValue };
+		doRest('/api/meters/' + (meterno - 1), 'PUT', meterValue);
+	}
 
+	function sounds(soundtype) {
+		var newState = { state: soundtype };
+		doRest('/api/state', 'POST', newState);		
+	}
+
+	function eyeState(newState) {
+		doRest('/api/eye/mode/' + newState, 'PUT');
+	}
+
+	function eyePupil(newState) {
+		doRest('/api/eye/pupil/' + newState, 'PUT');
+	}
+
+	function eyeBlink(newSpeed) {
+		doRest('/api/eye/blinkspeed/' + newSpeed, 'PUT');
+	}
+
+	function eyeBlinkRate(newSpeed) {
+		doRest('/api/eye/blinkrate/' + newSpeed, 'PUT');
+	}
 	</script>
 </html>

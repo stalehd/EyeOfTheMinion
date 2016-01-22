@@ -59,5 +59,27 @@ def minion_control_panel():
     return redirect('html/mcp/index.html')
     
 
+@app.route('/api/eye/pupil/<string:pupilsize>', methods=['PUT'])
+def set_pupil(pupilsize):
+    print 'Pupil set to ', pupilsize
+    return json.jsonify(pupil=pupilsize)
+
+@app.route('/api/eye/blinkspeed/<int:blinkspeed>', methods=['PUT'])
+def set_blink(blinkspeed):
+    print 'Blink set to ', blinkspeed
+    #Blink once to signal change, keep rate unchanged
+    return json.jsonify(blink=blinkspeed)
+
+@app.route('/api/eye/blinkrate/<int:interval>', methods=['PUT'])
+def set_blinkrate(interval):
+    print 'Blink rate set to', interval
+    # blink once to signal change, new rate
+    return json.jsonify(rate=interval)
+
+@app.route('/api/eye/mode/<string:mode>', methods=['PUT'])
+def set_eye_mode(mode):
+    print 'Eye mode set to', mode
+    return json.jsonify(eyemode=mode)
+
 if __name__ == "__main__":
     app.run(debug=True)
