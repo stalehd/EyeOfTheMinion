@@ -1,5 +1,6 @@
 from flask import Flask, redirect, request
 from flask import json
+import hardware
 import os
 
 app = Flask(__name__, static_folder='html')
@@ -32,7 +33,19 @@ def look():
 
 @app.route('/api/meters/<int:meter_id>', methods=['GET', 'PUT'])
 def meter(meter_id):
-    return json.jsonify(implemented='nopes')
+    if request.method == 'GET':
+        meter_value = hardware.get_meter_value(meter_id)
+        if not meter_value:
+            return json.jsonify(error = 'Could not read meter value'), 503
+
+        return json.jsonify(meter_id = meter_id, value=meter_value)
+
+    if request.method == 'PUT':
+        meter_value = request.form['value']
+        hardware.set_meter_value(meter_id, meter_value)
+        return json.jsonify(meter_id = meter_id, value=meter_value)
+
+    return json.jsonify(response='Bad request'), 400
 
 
 @app.route('/api/stfu', methods=['PUT'])
@@ -60,4 +73,4 @@ def minion_control_panel():
     
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0',debug=True)

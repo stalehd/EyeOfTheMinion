@@ -132,7 +132,7 @@
 		function meter(meterno, meterValue) {
 			var value = { value: meterValue };
 
-			$.ajax({ method: 'PUT', url: '/api/meters/' + (meterno - 1), data: meterValue})
+			$.ajax({ method: 'PUT', url: '/api/meters/' + (meterno - 1), data: value})
 				.done(function(data) {
 					alert('Computer says YES');
 				})
